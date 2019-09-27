@@ -1,4 +1,7 @@
 from sklearn import svm
+import numpy as np
+from sklearn.model_selection import LeaveOneOut
+from sklearn import preprocessing
 
 
 #datasets
@@ -65,37 +68,52 @@ woodPlastic = [[6.300e+07, 6.750e+07, 5.850e+07, 6.480e+07, 1.962e+08],
 [1.314e+08, 3.285e+08, 4.473e+08, 4.212e+08, 8.640e+08],
 [6.300e+07, 1.818e+08, 2.367e+08, 3.384e+08, 3.312e+08]]
 
-expectedV = [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0]
+expectedV = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2]
 
 
 
-#leave one out cross validation function implementing svm
-def loocv(dataset,expectedValues,kernel):
+#leave one out cross validation
+def loocv(dataset,expectedValues,kernel,scale,low,high):
     
-    clf = svm.SVC( kernel = kernel, C = 1, gamma = "auto") #creating svm object
+    X = np.array(dataset)
+    y = np.array(expectedValues)
+    clf = svm.SVC( kernel = kernel, gamma = "auto") #creating svm object
     results = []
-    
-    for x in range(len(dataset)):
-        expected = expectedValues[:]
-        train = dataset[:] #copies entire data set into training set
-        test = [train[x]]  #places single element from training set into test set
-        del train[x]       #deletes the element placed in test set from training set
-        del expected[x]    #deletes same element from from expected       
-        print(expected)
-        clf.fit(train, expected) #training svm using training set
+    fails = 0
 
-        prediction = clf.predict(test)  #predicting value
+    if(scale == True):
+        min_max_scaler = preprocessing.MinMaxScaler(feature_range =(low,high))
+        X = min_max_scaler.fit_transform(X)
+    
+    for x in range(len(X)):
+        A = np.delete(X,x,0)
+        b = np.delete(y,x)
+        clf.fit(A,b)
+        prediction = clf.predict([X[x]])
+        if(prediction[0]!=y[x]):
+            fails+=1
         results.append(prediction[0])
-        
+
     print("expected: " + str(expectedValues))
     print("outcome: " + str(results))
+    print("number of misses " + str(fails))
+    print("********************************************************************")
+    print(X)
+    print("********************************************************************")
+
+    
+high = 9
+low = -9
 
 print("cardboardPlastic")
-loocv(cardboardPlastic,expectedV,"rbf")
-print("woodPlastic")
-loocv(woodPlastic,expectedV,"rbf")
+loocv(cardboardPlastic,expectedV,"linear",True,low,high)
+
 print("cardboardWood")
-loocv(cardboardWood,expectedV,"rbf")
+loocv(cardboardWood,expectedV,"linear",True,low,high)
+
+print("woodPlastic")
+loocv(woodPlastic,expectedV,"linear",True,low,high)
+
 
 
 
