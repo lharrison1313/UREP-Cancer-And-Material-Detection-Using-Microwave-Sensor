@@ -1,7 +1,9 @@
 from sklearn import svm
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
+from sklearn.neural_network import MLPClassifier
 
 
 #datasets
@@ -479,20 +481,22 @@ expectedOvA3 = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
 
         
 #leave one out cross validation
-def loocv(dataset,expectedValues,kernel,scale,low,high,C,G):
+def loocv(dataset,expectedValues,classifier,scale,minimum,maximum):
     
     X = np.array(dataset)
     y = np.array(expectedValues)
-    clf = svm.SVC( kernel = kernel, decision_function_shape='ovr', gamma = G, C = C) #creating svm object
+    clf = classifier
     results = []
-    fails = 0
-    false1 = 0
-    false2 = 0
+    misses = 0
+    miss1 = 0
+    miss2 = 0
 
+    #scalling data
     if(scale == True):
         min_max_scaler = preprocessing.MinMaxScaler(feature_range =(low,high))
         X = min_max_scaler.fit_transform(X)
-    
+
+    #performing loocv
     for x in range(len(X)):
         A = np.delete(X,x,0)
         b = np.delete(y,x)
@@ -500,60 +504,57 @@ def loocv(dataset,expectedValues,kernel,scale,low,high,C,G):
         prediction = clf.predict([X[x]])
         if(prediction[0]!=y[x]):
             if(y[x] == 1):
-                false2 += 1
+                miss1 += 1
             else:
-                false1 +=1
-            fails+=1
+                miss2 +=1
+            misses+=1
         results.append(prediction[0])
+
 
     print("expected: " + str(expectedValues))
     print("outcome: " + str(results))
-    print("number of correct classifications " + str(len(X)-fails) + "/" + str(len(X)))
-    print("false 1's: " + str(false1))
-    print("false 2's: " + str(false2))
+    print("number of correct classifications " + str(len(X)-misses) + "/" + str(len(X)))
+    print("misclassified 1's: " + str(miss1))
+    print("misclassified 2's: " + str(miss2))
     print("********************************************************************")
-    #print(X)
-    #print("********************************************************************")
+    return results, misses, miss1, miss2
 
-    
+
 high = 1
 low = -1
-kernelType = "rbf"
-CValue = 100
-gamma = "scale"
-#Set D, E, and F using loocv and One vs. All binary classification
-#python 130/150 correctly classified
+scale = True
+svm1 = svm.SVC( kernel = "rbf", decision_function_shape='ovr', gamma = "scale", C = 100) #creating svm object
+rf = RandomForestClassifier(n_estimators=10) #creating rf object
+mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 3), random_state=1) #creating mlp object
+clf = rf
+
+#D vs Rest
 print("Classifying D")
-loocv(SetDEF,expectedOvA1,kernelType,True,low,high,CValue,gamma)
+loocv(SetDEF,expectedOvA1,clf,scale,low,high)
 
-#python 117/150 correctly classified
+#E vs Rest
 print("Classifying E")
-loocv(SetDEF,expectedOvA2,kernelType,True,low,high,CValue,gamma)
+loocv(SetDEF,expectedOvA2,clf,scale,low,high)
 
-#python 103/150 correctly classified
+#F vs Rest
 print("Classifying F")
-loocv(SetDEF,expectedOvA3,"rbf",True,low,high,CValue,gamma)
+loocv(SetDEF,expectedOvA3,clf,scale,low,high)
 
-#Set D and E
-#python 91/100 correctly classified
-#matlab 92/100 correctly classified
-print("SetDE")
-loocv(SetDE,expectedV1,kernelType,True,low,high,CValue,gamma)
+#D vs E
+print("Classifying D vs E")
+loocv(SetDE,expectedV1,clf,scale,low,high)
 
-#Set E and F
-#python 73/100 correctly classified
-#matlab 79/100 correctly classified
-print("SetEF")
-loocv(SetEF,expectedV1,kernelType,True,low,high,CValue,gamma)
+#E vs F
+print("Classifying E vs F")
+loocv(SetEF,expectedV1,clf,scale,low,high)
 
-#Set D and F
-#python 80/100 correctly classified
-#matlab 89/100 correctly classified
-print("SetDF")
-loocv(SetDF,expectedV1,kernelType,True,low,high,CValue,gamma)
+#D vs F
+print("Classifying D vs f")
+loocv(SetDF,expectedV1,clf,scale,low,high)
 
 
-
+#try removing different combinations of features
+#try different decision functions
 
 
 
