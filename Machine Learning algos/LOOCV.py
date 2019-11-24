@@ -1,6 +1,5 @@
 from sklearn import svm
 import numpy as np
-from sklearn.model_selection import LeaveOneOut
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
@@ -478,10 +477,14 @@ expectedOvA3 = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
               2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
               1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
+expectedDEF = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+              2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+
 
         
 #leave one out cross validation
-def loocv(dataset,expectedValues,classifier,scale,minimum,maximum):
+def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
     
     X = np.array(dataset)
     y = np.array(expectedValues)
@@ -490,6 +493,7 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum):
     misses = 0
     miss1 = 0
     miss2 = 0
+    miss3 = 0
 
     #scalling data
     if(scale == True):
@@ -505,53 +509,106 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum):
         if(prediction[0]!=y[x]):
             if(y[x] == 1):
                 miss1 += 1
-            else:
+            elif(y[x] == 2):
                 miss2 +=1
+            else:
+                miss3 +=1
             misses+=1
         results.append(prediction[0])
 
-
-    print("expected: " + str(expectedValues))
-    print("outcome: " + str(results))
-    print("number of correct classifications " + str(len(X)-misses) + "/" + str(len(X)))
-    print("misclassified 1's: " + str(miss1))
-    print("misclassified 2's: " + str(miss2))
-    print("********************************************************************")
+    if(printResults):
+        print("********************************************************************")
+        print("expected: " + str(expectedValues))
+        print("outcome: " + str(results))
+        print("number of correct classifications " + str(len(X)-misses) + "/" + str(len(X)))
+        print("misclassified 1's: " + str(miss1))
+        print("misclassified 2's: " + str(miss2))
+        print("misclassified 3's: " + str(miss3))
+        print("********************************************************************")
     return results, misses, miss1, miss2
+
+def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
+
+    print("classifying...")
+    #classifiers voting
+    votes = []
+    for c in classifiers:
+        votes.append(loocv(dataset,expectedValues,c,scale,minimum,maximum,False)[0])
+
+    print("tallying votes")
+    #tallying votes
+    subvotes = []
+    majority = []
+    for col in range(len(votes[0])):
+        subvotes.clear()
+        count1 = 0
+        count2 = 0
+        for row in range(len(classifiers)):
+            subvotes.append(votes[row][col])
+        for x in subvotes:
+            if x == 1:
+                count1 += 1
+            else:
+                count2 += 1
+        if count1 > count2:
+            majority.append(1)
+        elif count2 > count1:
+            majority.append(2)
+        else:
+            majority.append(0)
+
+    misses = 0
+    for i in range(len(majority)):
+        if(majority[i] != expectedValues[i]):
+            misses+=1
+
+    print(majority)
+    print(expectedValues)
+    return misses, len(expectedValues)-misses
 
 
 high = 1
 low = -1
 scale = True
 svm1 = svm.SVC( kernel = "rbf", decision_function_shape='ovr', gamma = "scale", C = 100) #creating svm object
-rf = RandomForestClassifier(n_estimators=10) #creating rf object
-mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 3), random_state=1) #creating mlp object
+rf = RandomForestClassifier(n_estimators=100) #creating rf object
+mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 4), random_state=1) #creating mlp object
+clfs = [svm1,rf,mlp]
 clf = rf
+
+print(majorityVote(SetDF,expectedV1,clfs,scale,low,high))
+
+'''
+#D vs E vs F MLP
+loocv(SetDEF,expectedDEF,mlp,scale,low,high,True)
+
+#D vs E vs F rf
+loocv(SetDEF,expectedDEF,rf,scale,low,high,True)
 
 #D vs Rest
 print("Classifying D")
-loocv(SetDEF,expectedOvA1,clf,scale,low,high)
+loocv(SetDEF,expectedOvA1,clf,scale,low,high,True)
 
 #E vs Rest
 print("Classifying E")
-loocv(SetDEF,expectedOvA2,clf,scale,low,high)
+loocv(SetDEF,expectedOvA2,clf,scale,low,high,True)
 
 #F vs Rest
 print("Classifying F")
-loocv(SetDEF,expectedOvA3,clf,scale,low,high)
+loocv(SetDEF,expectedOvA3,clf,scale,low,high,True)
 
 #D vs E
 print("Classifying D vs E")
-loocv(SetDE,expectedV1,clf,scale,low,high)
+loocv(SetDE,expectedV1,clf,scale,low,high,True)
 
 #E vs F
 print("Classifying E vs F")
-loocv(SetEF,expectedV1,clf,scale,low,high)
+loocv(SetEF,expectedV1,clf,scale,low,high,True)
 
 #D vs F
 print("Classifying D vs f")
-loocv(SetDF,expectedV1,clf,scale,low,high)
-
+loocv(SetDF,expectedV1,clf,scale,low,high,True)
+'''
 
 #try removing different combinations of features
 #try different decision functions
