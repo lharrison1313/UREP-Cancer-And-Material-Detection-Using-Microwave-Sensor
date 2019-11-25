@@ -524,18 +524,18 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
         print("misclassified 1's: " + str(miss1))
         print("misclassified 2's: " + str(miss2))
         print("misclassified 3's: " + str(miss3))
-        print("********************************************************************")
+
     return results, misses, miss1, miss2
 
 def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
 
-    print("classifying...")
+
     #classifiers voting
     votes = []
     for c in classifiers:
         votes.append(loocv(dataset,expectedValues,c,scale,minimum,maximum,False)[0])
 
-    print("tallying votes")
+
     #tallying votes
     subvotes = []
     majority = []
@@ -562,8 +562,12 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
         if(majority[i] != expectedValues[i]):
             misses+=1
 
-    print(majority)
-    print(expectedValues)
+    print("********************************************************************")
+    for x in range(len(classifiers)):
+        print("classifier " + str(x) + " votes:" + str(votes[x]))
+    print("Majority votes: " + str(majority))
+    print("Expected: " + str(expectedValues))
+    print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
     return misses, len(expectedValues)-misses
 
 
@@ -571,12 +575,30 @@ high = 1
 low = -1
 scale = True
 svm1 = svm.SVC( kernel = "rbf", decision_function_shape='ovr', gamma = "scale", C = 100) #creating svm object
-rf = RandomForestClassifier(n_estimators=100) #creating rf object
-mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 4), random_state=1) #creating mlp object
-clfs = [svm1,rf,mlp]
+rf = RandomForestClassifier(n_estimators=100,random_state=10) #creating rf object
+mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 3), random_state=1) #creating mlp object
+clfs = [rf,svm1,mlp]
 clf = rf
 
-print(majorityVote(SetDF,expectedV1,clfs,scale,low,high))
+print("D vs Rest")
+majorityVote(SetDEF,expectedOvA1,clfs,scale,low,high)
+
+print("\nE vs Rest")
+majorityVote(SetDEF,expectedOvA2,clfs,scale,low,high)
+
+print("\nF vs Rest")
+majorityVote(SetDEF,expectedOvA3,clfs,scale,low,high)
+
+print("\nD vs E")
+majorityVote(SetDE,expectedV1,clfs,scale,low,high)
+
+print("\nE vs F")
+majorityVote(SetEF,expectedV1,clfs,scale,low,high)
+
+print("\nD vs F")
+majorityVote(SetDF,expectedV1,clfs,scale,low,high)
+
+
 
 '''
 #D vs E vs F MLP
