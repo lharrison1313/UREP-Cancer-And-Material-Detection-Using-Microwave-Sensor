@@ -4,8 +4,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 from pyod.models import abod
+from pyod.models import iforest
+from pyod.models import knn
 
-
+#D = cardboard
+#E = Plastic
+#F = cardboard
 #datasets
 SetDEF = [[1.071e+08,2.043e+08,2.925e+08,2.277e+08,6.066e+08],
 [5.310e+07,8.820e+07,1.224e+08,3.150e+07,-2.700e+07],
@@ -497,7 +501,7 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
 
     #scalling data
     if(scale == True):
-        min_max_scaler = preprocessing.MinMaxScaler(feature_range =(low,high))
+        min_max_scaler = preprocessing.MinMaxScaler(feature_range =(minimum,maximum))
         X = min_max_scaler.fit_transform(X)
 
     #performing loocv
@@ -569,33 +573,54 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
     return misses, len(expectedValues)-misses
 
 
-def detectOutliers(data):
+def detectOutliers(data,detector):
     # Angle base outlier detection using pyod module
-    detector = abod.ABOD(method="fast")
+    outliers = 0
     X = np.array(data)
     detector.fit(X)
     predictions = detector.predict(X)
-    print(len(predictions))
+    for x in predictions:
+        if(x == 1):
+            outliers +=1
+
+    print("number of outliers: " + str(outliers))
     print(predictions)
 
 
 
+#machine learning parameters
 high = 1
 low = -1
 scale = True
 svm1 = svm.SVC( kernel = "rbf", decision_function_shape='ovr', gamma = "scale", C = 100) #creating svm object
-rf = RandomForestClassifier(n_estimators=100,random_state=10) #creating rf object
+rf = RandomForestClassifier(n_estimators=10,random_state=10) #creating rf object
 mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 3), random_state=1) #creating mlp object
 clfs = [rf,svm1,mlp]
 clf = rf
 
-#detecting outliers
-detectOutliers(SetDEF[:50])
-detectOutliers(SetDEF[50:100])
-detectOutliers(SetDEF[100:150])
+#outlier detectors
+angleBased = abod.ABOD(method="fast")
+isolationForrest = iforest.IForest(n_estimators=100,behaviour="new")
+kNearestNeighbors = knn.KNN(method="median")
+detector = kNearestNeighbors
 
+
+#Todo confusion matrix plotting
+#remove outliers
+#only focus on D vs Rest, and E vs F
+#do majority votes give best cases or single classifier
 
 '''
+#detecting outliers
+print("outliers in set D")
+#detectOutliers(SetDEF[:50],detector)
+print("outliers in set E")
+#detectOutliers(SetDEF[50:100],detector)
+print("outliers in set F")
+#detectOutliers(SetDEF[100:150],detector)
+'''
+
+
 
 #Majority vote predictions
 print("D vs Rest")
@@ -616,6 +641,7 @@ majorityVote(SetEF,expectedV1,clfs,scale,low,high)
 print("\nD vs F")
 majorityVote(SetDF,expectedV1,clfs,scale,low,high)
 
+"""
 #single model predictions
 #D vs E vs F MLP
 loocv(SetDEF,expectedDEF,mlp,scale,low,high,True)
@@ -651,7 +677,7 @@ loocv(SetDF,expectedV1,clf,scale,low,high,True)
 #try removing different combinations of features
 #try different decision functions
 
-
+"""
 
 
 
