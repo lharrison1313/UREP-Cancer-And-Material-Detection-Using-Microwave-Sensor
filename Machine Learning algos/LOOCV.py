@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
+from pyod.models import abod
 
 
 #datasets
@@ -485,7 +486,6 @@ expectedDEF = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
         
 #leave one out cross validation
 def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
-    
     X = np.array(dataset)
     y = np.array(expectedValues)
     clf = classifier
@@ -528,8 +528,6 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
     return results, misses, miss1, miss2
 
 def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
-
-
     #classifiers voting
     votes = []
     for c in classifiers:
@@ -571,6 +569,17 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
     return misses, len(expectedValues)-misses
 
 
+def detectOutliers(data):
+    # Angle base outlier detection using pyod module
+    detector = abod.ABOD(method="fast")
+    X = np.array(data)
+    detector.fit(X)
+    predictions = detector.predict(X)
+    print(len(predictions))
+    print(predictions)
+
+
+
 high = 1
 low = -1
 scale = True
@@ -580,6 +589,15 @@ mlp = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(5, 3), random
 clfs = [rf,svm1,mlp]
 clf = rf
 
+#detecting outliers
+detectOutliers(SetDEF[:50])
+detectOutliers(SetDEF[50:100])
+detectOutliers(SetDEF[100:150])
+
+
+'''
+
+#Majority vote predictions
 print("D vs Rest")
 majorityVote(SetDEF,expectedOvA1,clfs,scale,low,high)
 
@@ -598,9 +616,7 @@ majorityVote(SetEF,expectedV1,clfs,scale,low,high)
 print("\nD vs F")
 majorityVote(SetDF,expectedV1,clfs,scale,low,high)
 
-
-
-'''
+#single model predictions
 #D vs E vs F MLP
 loocv(SetDEF,expectedDEF,mlp,scale,low,high,True)
 
