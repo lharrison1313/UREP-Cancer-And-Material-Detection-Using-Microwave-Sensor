@@ -1,7 +1,6 @@
 import csv
 import os
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 
@@ -20,102 +19,111 @@ def printData(name,dataset):
     for data in dataset:
         print(data)
 
-#returns an array of 5 minimums 1 for each sensor format: {f1,f2,f3,f4,f5}
-def processData(csvFile):
-    #initializing 2d array
-    datalist = [[0 for x in range(2)] for y in range(10004)]
+def parseCsv(csvFile):
+    # initializing 2d array
+    data = []
 
-    #parsing csv into 2d array
+    # parsing csv into 2d array
     keys = ["Frequency", "Formatted Data"]
     with open(csvFile) as csvfile:
-        reader = csv.DictReader(csvfile,keys)
-        rows = 0
+        reader = csv.DictReader(csvfile, keys)
+
         for row in reader:
-           datalist[rows][0] = row["Frequency"]
-           datalist[rows][1] = row["Formatted Data"]
-           rows += 1
-           
-    #removing header info from datalist
-    datalist = datalist[3:]
+            data.append([row["Frequency"],row["Formatted Data"]])
 
-    #converting datalist values from strings to floats
+    # removing header info from datalist
+    data = data[3:]
+
+    # converting datalist values from strings to floats
     rows = 0
-    for x in datalist:
-        datalist[rows][0] = float(x[0])
-        datalist[rows][1] = float(x[1])
-        rows+=1
-
-    #splitting datalist values into 5 sets of sensor data
-    #change splicing values to change intervals
-    f1set = datalist[0:1119]
-    f2set = datalist[1119:3589]
-    f3set = datalist[3589:5740]
-    f4set = datalist[5740:7175]
-    f5set = datalist[7175:9086]
-
-    f1 = findMin(f1set)
-    f2 = findMin(f2set)
-    f3 = findMin(f3set)
-    f4 = findMin(f4set)
-    f5 = findMin(f5set)
+    for x in data:
+        data[rows][0] = float(x[0])
+        data[rows][1] = float(x[1])
+        rows += 1
+    return data
 
 
-    #plotting values
-    xvalues=[0 for x in range(len(datalist))]
-    yvalues=[0 for x in range(len(datalist))]
+#returns an array of peak resonance frequencies based on the number of input partitions
+def processData(csvFile,inputPartitions):
+    data = parseCsv(csvFile)
+
+    # splitting datalist values into different partitions
+    frequencies = []
+    for x in range(len(inputPartitions)):
+        if(x == 0):
+            frequencies.append(findMin(data[0:inputPartitions[x]]))
+        else:
+            frequencies.append(findMin(data[inputPartitions[x-1]:inputPartitions[x]]))
+
+    #plotting all values
+    xvalues=[0 for x in range(len(data))]
+    yvalues=[0 for x in range(len(data))]
     i = 0
-    for x in datalist:
-        xvalues[i] = datalist[i][0] 
-        yvalues[i] = datalist[i][1] 
+    for x in data:
+        xvalues[i] = data[i][0]
+        yvalues[i] = data[i][1]
         i+=1
-    fig, ax = plt.subplots()
-    ax.plot(xvalues,yvalues,"b")
-    ax.plot(f1[0],f1[1],"go")
-    ax.plot(f2[0],f2[1],"go")
-    ax.plot(f3[0],f3[1],"go")
-    ax.plot(f4[0],f4[1],"go")
-    ax.plot(f5[0],f5[1],"go")
-    ax.grid()
+    plt.plot(xvalues,yvalues,"black")
+
+    #plotting peak resonance frequencies
+    for x in frequencies :
+        plt.plot(x[0],x[1],"ro")
+
+    #setting labels
+    plt.xlabel("Frequency [GHz]")
+    plt.ylabel("S21 [DB]")
+    #plt.savefig()
+
+    #plotting partitions
+    for xvals in inputPartitions:
+        plt.axvline(x=data[xvals][0])
     plt.show()
+
+    #putting x values in output array
+    output = []
+    for x in frequencies:
+        output.append(x[0])
     
-    return f1[0], f2[0], f3[0], f4[0], f5[0]
+    return output
+
 
 #returns deltas and dataset of a folder containing sensor data and a empty sensor file
-def buildResults(datasetFilePath,emptySensorFilePath):
-    
+def buildResults(datasetFilePath,emptySensorFilePath,partitions):
+
     filelist = os.listdir(datasetFilePath)
-    dataset = []
+    peakFrequencies = []
     deltas = []
+    tempPartitions = partitions
 
     for file in filelist:
-        dataset.append(processData(datasetFilePath + file))
+        peakFrequencies.append(processData(datasetFilePath + file,partitions))
 
-    mt = processData(emptySensorFilePath)
+    mt = processData(emptySensorFilePath,partitions)
     
-    for data in dataset:
+    for data in peakFrequencies:
         deltas.append(np.subtract(np.asarray(mt),np.asarray(data)))
 
-    return dataset, mt, deltas
+    return peakFrequencies, mt, deltas
 
 
 
 
+defaultPartitions = [1119, 3589, 5740, 7175, 9086]
 print("Please enter folder path for dataset")
-datasetFilePath = input()
+datasetFilePath = input() + "\\"
 print("Please enter name for dataset")
 datasetName = input()
 print("please enter file path for empty sensor data")
 emptySensorFilePath = input()
 
-results = buildResults(datasetFilePath,emptySensorFilePath)
-
+results = buildResults(datasetFilePath,emptySensorFilePath,defaultPartitions)
 printData(datasetName + " data",results[0])
 printData("empty sensor", results[1])
 printData(datasetName + " deltas", results[2] )
 
 
 #example input        
-#C:\Users\Luke\Documents\DNA_Hybridization\SensorData\Wood\
+#C:\Users\Luke\Documents\DNA_Hybridization\SensorData\Wood
 #wood
 #C:\Users\Luke\Documents\DNA_Hybridization\SensorData\Empty_Sensor\M1(EMPTY).CSV
 
