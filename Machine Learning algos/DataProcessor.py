@@ -3,6 +3,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askdirectory
 
 
 #function used for finding the minimum of a single sensor
@@ -79,7 +82,7 @@ def processData(csvFile,inputPartitions,figOutputFile):
     for i in inputPartitions:
         plt.axvline(x=data[i][0])
     plt.show()
-
+    print("done0")
     #putting x values in output array
     output = []
     for x in frequencies:
@@ -99,13 +102,14 @@ def buildResults( datasetName, datasetFilePath, emptySensorFilePath, partitions,
         tempPartitions = partitions.copy()
         keep = False
         while not keep:
-            peakFrequencies.append(processData(datasetFilePath + file, tempPartitions, figOutputFile+"\\"+datasetName+str(dataNum)))
+            peakFrequencies.append(processData(datasetFilePath + file, tempPartitions, figOutputFile+"/"+datasetName+str(dataNum)))
+            print("done1")
             tempPartitions, keep = changePartitions(tempPartitions)
         dataNum += 1
 
     keep = False
     while not keep:
-        mt = processData(emptySensorFilePath, tempPartitions, figOutputFile+"\\"+"EmptySensor")
+        mt = processData(emptySensorFilePath, tempPartitions, figOutputFile+"/"+"EmptySensor")
         tempPartitions, keep = changePartitions(tempPartitions)
     
     for data in peakFrequencies:
@@ -119,6 +123,7 @@ def changePartitions(currentPartitions):
     done1 = False
     done2 = False
     while(not done1):
+        print("done2")
         response1 = input("Would you like to edit the partitions for this sample? y/n\n")
         if response1 == "y":
             while not done2:
@@ -153,11 +158,22 @@ def changePartitions(currentPartitions):
 
 
 defaultPartitions = [1119, 3589, 5740, 7175, 9086]
-dataSetFilePath = input("Please enter folder path for dataset:\n") + "\\"
+root = Tk()
+root.withdraw()
+print("Please enter folder path for dataset")
+dataSetFilePath = askdirectory()+"/"
+print(dataSetFilePath)
 dataSetName = input("Please enter name for dataset:\n")
-emptySensorFilePath = input("please enter file path for empty sensor data:\n")
-outputFilePathFigs = input("please enter file path for peak resonance frequencies figures:\n")
-outputFilePathCsv = input("please enter folder path for deltas output csv file:\n")
+print("please enter file path for empty sensor data")
+emptySensorFilePath = askopenfilename()
+print(emptySensorFilePath)
+print("please enter file path for peak resonance frequencies figures")
+outputFilePathFigs = askdirectory()
+print(outputFilePathFigs)
+print("please enter folder path for deltas output csv file")
+outputFilePathCsv = askdirectory()
+print(outputFilePathCsv)
+root.destroy()
 
 results = buildResults(dataSetName, dataSetFilePath, emptySensorFilePath, defaultPartitions, outputFilePathFigs)
 printData(dataSetName + " data", results[0])
@@ -166,13 +182,5 @@ printData(dataSetName + " deltas", results[2])
 
 #placing deltas in csv file
 df = pd.DataFrame.from_records(results[2])
-df.to_csv(outputFilePathCsv+"\\"+dataSetName+"Deltas.csv")
+df.to_csv(outputFilePathCsv+"/"+dataSetName+"Deltas.csv")
 
-#example input        
-#C:\Users\Luke\Documents\GitHub\UREP_Cancer_Detection_Array_Microwave_Sensor\SensorData1\Wood
-#wood
-#C:\Users\Luke\Documents\GitHub\UREP_Cancer_Detection_Array_Microwave_Sensor\SensorData1\Empty_Sensor\M1 (EMPTY).CSV
-#C:\Users\Luke\Documents\GitHub\UREP_Cancer_Detection_Array_Microwave_Sensor\Charts\WoodFigs
-#C:\Users\Luke\Documents\GitHub\UREP_Cancer_Detection_Array_Microwave_Sensor\results\Deltas
-
-    
