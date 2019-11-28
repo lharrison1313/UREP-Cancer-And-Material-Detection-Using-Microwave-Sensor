@@ -82,7 +82,7 @@ def processData(csvFile,inputPartitions,figOutputFile):
     for i in inputPartitions:
         plt.axvline(x=data[i][0])
     plt.show()
-    print("done0")
+
     #putting x values in output array
     output = []
     for x in frequencies:
@@ -95,22 +95,25 @@ def buildResults( datasetName, datasetFilePath, emptySensorFilePath, partitions,
 
     filelist = os.listdir(datasetFilePath)
     peakFrequencies = []
+    tempPeaks = []
     deltas = []
     dataNum = 1
 
     for file in filelist:
-        tempPartitions = partitions.copy()
         keep = False
         while not keep:
-            peakFrequencies.append(processData(datasetFilePath + file, tempPartitions, figOutputFile+"/"+datasetName+str(dataNum)))
-            print("done1")
-            tempPartitions, keep = changePartitions(tempPartitions)
+            try:
+                tempPeaks = processData(datasetFilePath + file, partitions, figOutputFile+"/"+datasetName+str(dataNum))
+            except IndexError:
+                print("Partition Error: make sure partitions do not overlap")
+            partitions, keep = changePartitions(partitions)
         dataNum += 1
+        peakFrequencies.append(tempPeaks)
 
     keep = False
     while not keep:
-        mt = processData(emptySensorFilePath, tempPartitions, figOutputFile+"/"+"EmptySensor")
-        tempPartitions, keep = changePartitions(tempPartitions)
+        mt = processData(emptySensorFilePath, partitions, figOutputFile+"/"+"EmptySensor")
+        partitions, keep = changePartitions(partitions)
     
     for data in peakFrequencies:
         deltas.append(np.subtract(np.asarray(mt), np.asarray(data)),)
@@ -123,31 +126,33 @@ def changePartitions(currentPartitions):
     done1 = False
     done2 = False
     while(not done1):
-        print("done2")
-        response1 = input("Would you like to edit the partitions for this sample? y/n\n")
-        if response1 == "y":
+        response = input("Would you like to edit the partitions for this sample? y/n\n")
+        if response == "y":
             while not done2:
-                print("Current Partitions")
-                numParts = 0
-                for parts in newPartitions:
-                    print(str(numParts)+": "+ str(parts))
-                    numParts += 1
+                try:
+                    print("Current Partitions")
+                    numParts = 0
+                    for parts in newPartitions:
+                        print(str(numParts)+": "+ str(parts))
+                        numParts += 1
 
-                response2 = input("enter partition number or type 'done' to stop editing partition\n")
-                if str(response2) == "done":
-                    done2 = True
-                elif int(response2) >= 0 and int(response2) < len(currentPartitions):
-                    response3 = input("enter new value for partition or type 'done' to stop editing partition\n")
-                    if(str(response3) == "done"):
-                        print("backing up")
-                    elif(int(response3) >= 0 and int(response3) <= 10000):
-                        newPartitions[int(response2)] = int(response3)
+                    partitionNum = input("enter partition number or type 'done' to stop editing partition\n")
+                    if str(partitionNum) == "done":
+                        done2 = True
+                    elif int(partitionNum) >= 0 and int(partitionNum) < len(currentPartitions):
+                        partitionValue = input("enter new value for partition or type 'done' to stop editing partition\n")
+                        if str(partitionValue) == "done":
+                            print("backing up")
+                        elif int(partitionValue) >= 0 and int(partitionValue) <= 10000 :
+                            newPartitions[int(partitionNum)] = int(partitionValue)
+                        else:
+                            print("Invalid Input")
                     else:
                         print("Invalid Input")
-                else:
-                    print("Invalid Input")
+                except ValueError:
+                    print("InvalidInput")
             done1 = True
-        elif response1 == "n":
+        elif response == "n":
             keep = True
             done1 = True
         else:
@@ -157,7 +162,7 @@ def changePartitions(currentPartitions):
 
 
 
-defaultPartitions = [1119, 3589, 5740, 7175, 9086]
+defaultPartitions = [1119, 3589, 5740, 7400, 9086]
 root = Tk()
 root.withdraw()
 print("Please enter folder path for dataset")
