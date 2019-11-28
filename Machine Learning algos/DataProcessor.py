@@ -87,26 +87,69 @@ def processData(csvFile,inputPartitions,figOutputFile):
     
     return output
 
-
 #returns deltas and dataset of a folder containing sensor data and a empty sensor file
 def buildResults( datasetName, datasetFilePath, emptySensorFilePath, partitions, figOutputFile):
 
     filelist = os.listdir(datasetFilePath)
     peakFrequencies = []
     deltas = []
-    tempPartitions = partitions
     dataNum = 1
 
     for file in filelist:
-        peakFrequencies.append(processData(datasetFilePath + file, partitions, figOutputFile+"\\"+datasetName+str(dataNum)))
+        tempPartitions = partitions.copy()
+        keep = False
+        while not keep:
+            peakFrequencies.append(processData(datasetFilePath + file, tempPartitions, figOutputFile+"\\"+datasetName+str(dataNum)))
+            tempPartitions, keep = changePartitions(tempPartitions)
         dataNum += 1
 
-    mt = processData(emptySensorFilePath, partitions, figOutputFile+"\\"+"EmptySensor")
+    keep = False
+    while not keep:
+        mt = processData(emptySensorFilePath, tempPartitions, figOutputFile+"\\"+"EmptySensor")
+        tempPartitions, keep = changePartitions(tempPartitions)
     
     for data in peakFrequencies:
         deltas.append(np.subtract(np.asarray(mt), np.asarray(data)),)
 
     return peakFrequencies, mt, deltas
+
+def changePartitions(currentPartitions):
+    newPartitions = currentPartitions.copy()
+    keep = False
+    done1 = False
+    done2 = False
+    while(not done1):
+        response1 = input("Would you like to edit the partitions for this sample? y/n\n")
+        if response1 == "y":
+            while not done2:
+                print("Current Partitions")
+                numParts = 0
+                for parts in newPartitions:
+                    print(str(numParts)+": "+ str(parts))
+                    numParts += 1
+
+                response2 = input("enter partition number or type 'done' to stop editing partition\n")
+                if str(response2) == "done":
+                    done2 = True
+                elif int(response2) >= 0 and int(response2) < len(currentPartitions):
+                    response3 = input("enter new value for partition or type 'done' to stop editing partition\n")
+                    if(str(response3) == "done"):
+                        print("backing up")
+                    elif(int(response3) >= 0 and int(response3) <= 10000):
+                        newPartitions[int(response2)] = int(response3)
+                    else:
+                        print("Invalid Input")
+                else:
+                    print("Invalid Input")
+            done1 = True
+        elif response1 == "n":
+            keep = True
+            done1 = True
+        else:
+            print("Invalid Input")
+        return newPartitions,keep
+
+
 
 
 defaultPartitions = [1119, 3589, 5740, 7175, 9086]
