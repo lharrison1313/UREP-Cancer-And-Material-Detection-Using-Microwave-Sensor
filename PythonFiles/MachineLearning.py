@@ -7,6 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from pyod.models import abod
 from pyod.models import iforest
 from pyod.models import knn
+from itertools import combinations
 
 #D = cardboard
 #E = Plastic
@@ -102,6 +103,7 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
     return misses, len(expectedValues)-misses
 
 
+#removes outliers from dataset using specified outlier detector
 def removeOutliers(data, detector):
     outliers = 0
     dataWOoutliers = []
@@ -121,7 +123,7 @@ def removeOutliers(data, detector):
     return dataWOoutliers
 
 
-
+#parses a csv file into a dataset
 def parseCsv(csvFile):
     # initializing 2d array
     data = []
@@ -147,6 +149,23 @@ def parseCsv(csvFile):
         rows += 1
     return(data)
 
+#returns an array of sensor combinations for a given dataset
+def getCombos(dataset,r):
+    comboSet = []
+    for row in dataset:
+        comboSet.append(list(combinations(row,r)))
+
+    outputSet = [[] for i in range(len(comboSet[0]))]
+    for i in range(len(comboSet)):
+        for j in range(len(comboSet[0])):
+            outputSet[j].append(comboSet[i][j])
+
+    return outputSet
+
+
+
+
+
 
 #machine learning parameters and classifiers
 high = 1
@@ -170,6 +189,27 @@ wood = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array
 plastic = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\BDeltas.csv")
 plastic = plastic+parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\FDeltas.csv")
 
+#sensor combo datasets row = rValue col = dataset
+#number of datasets for each rValue
+# 1 -> 5
+# 2 -> 10
+# 3 -> 10
+# 4 -> 5
+cardboardCombos = []
+woodCombos = []
+plasticCombos = []
+
+for i in range(1,len(cardboard[0])):
+    cardboardCombos.append(getCombos(cardboard,i))
+    woodCombos.append(getCombos(wood,i))
+    plasticCombos.append(getCombos(plastic,i))
+
+
+
+
+
+
+'''
 #removing outliers
 cardboard = removeOutliers(cardboard, detector)
 wood = removeOutliers(wood, detector)
@@ -180,7 +220,7 @@ cardboardEV = [[1 for i in range(len(cardboard))],[2 for i in range(len(cardboar
 woodEV = [[1 for i in range(len(wood))],[2 for i in range(len(wood))]]
 plasticEV = [[1 for i in range(len(plastic))],[2 for i in range(len(plastic))]]
 
-'''
+
 #Majority vote predictions
 print("D vs Rest")
 majorityVote(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clfs, scale, low, high)
