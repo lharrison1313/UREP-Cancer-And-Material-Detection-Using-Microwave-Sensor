@@ -59,9 +59,9 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
         print("misclassified 2's: " + str(miss2))
         print("misclassified 3's: " + str(miss3))
 
-    return results, misses, miss1, miss2
+    return results, misses, len(expectedValues)-misses
 
-def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
+def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printResults):
     #classifiers voting
     votes = []
     for c in classifiers:
@@ -94,13 +94,14 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum):
         if(majority[i] != expectedValues[i]):
             misses+=1
 
-    print("********************************************************************")
-    for x in range(len(classifiers)):
-        print("classifier " + str(x) + " votes:" + str(votes[x]))
-    print("Majority votes: " + str(majority))
-    print("Expected: " + str(expectedValues))
-    print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
-    return misses, len(expectedValues)-misses
+    if(printResults == True):
+        print("********************************************************************")
+        for x in range(len(classifiers)):
+            print("classifier " + str(x) + " votes:" + str(votes[x]))
+        print("Majority votes: " + str(majority))
+        print("Expected: " + str(expectedValues))
+        print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
+    return majority, misses, len(expectedValues)-misses
 
 
 #removes outliers from dataset using specified outlier detector
@@ -163,10 +164,6 @@ def getCombos(dataset,r):
     return outputSet
 
 
-
-
-
-
 #machine learning parameters and classifiers
 high = 1
 low = -1
@@ -189,6 +186,9 @@ wood = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array
 plastic = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\BDeltas.csv")
 plastic = plastic+parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\FDeltas.csv")
 
+#standard expected values
+expected = [[1 for x in range(50)],[2 for x in range(50)]]
+
 #sensor combo datasets row = rValue col = dataset
 #number of datasets for each rValue
 # 1 -> 5
@@ -205,15 +205,42 @@ for i in range(1,len(cardboard[0])):
     plasticCombos.append(getCombos(plastic,i))
 
 
+#combo predictions E vs F
+maxI = 0
+maxJ = 0
+maximum = 0
+for i in range(len(cardboardCombos)):
+    for j in range(len(cardboardCombos[i])):
+        print(str(i) + str(j))
+        c = majorityVote(woodCombos[i][j]+plasticCombos[i][j],expected[0]+expected[1],clfs,True,low,high,True)[2]
+        if(c > maximum):
+            maximum = c
+            maxI = i
+            maxJ = j
+print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " max=" + str(maximum))
+
+
+#combo predictions D vs Rest
+maxI = 0
+maxJ = 0
+maximum = 0
+for i in range(len(cardboardCombos)):
+    for j in range(len(cardboardCombos[i])):
+        print(str(i) + str(j))
+        c = loocv(cardboardCombos[i][j]+woodCombos[i][j]+plasticCombos[i][j],expected[0]+expected[1]+expected[1],clf,True,low,high,True)[2]
+        if(c > maximum):
+            maximum = c
+            maxI = i
+            maxJ = j
+print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " max=" + str(maximum))
 
 
 
-
-'''
 #removing outliers
 cardboard = removeOutliers(cardboard, detector)
 wood = removeOutliers(wood, detector)
 plastic = removeOutliers(plastic, detector)
+
 
 #creating expected values
 cardboardEV = [[1 for i in range(len(cardboard))],[2 for i in range(len(cardboard))]]
@@ -224,6 +251,7 @@ plasticEV = [[1 for i in range(len(plastic))],[2 for i in range(len(plastic))]]
 #Majority vote predictions
 print("D vs Rest")
 majorityVote(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clfs, scale, low, high)
+
 
 print("E vs F")
 majorityVote(wood+plastic,woodEV[0]+plasticEV[1],clfs,scale,low,high)
@@ -239,7 +267,7 @@ loocv(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clf, scale,
 #E vs F
 print("Classifying E vs F")
 loocv(wood+plastic, woodEV[0]+plasticEV[1], clf, scale, low, high, True)
-'''
+
 
 
 
