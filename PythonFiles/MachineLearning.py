@@ -24,10 +24,8 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
     y = np.array(expectedValues)
     clf = classifier
     results = []
+    classes = createClassList(expectedValues)
     misses = 0
-    miss1 = 0
-    miss2 = 0
-    miss3 = 0
 
     #scalling data
     if(scale == True):
@@ -40,28 +38,26 @@ def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
         b = np.delete(y,x)
         clf.fit(A,b)
         prediction = clf.predict([X[x]])
-        if(prediction[0]!=y[x]):
-            if(y[x] == 1):
-                miss1 += 1
-            elif(y[x] == 2):
-                miss2 +=1
-            else:
-                miss3 +=1
-            misses+=1
         results.append(prediction[0])
+
+    #building confusion matrix
+    confusionMatrix, misses = buildConfusionMatrix(classes,results,expectedValues)
+
 
     if(printResults):
         print("********************************************************************")
         print("expected: " + str(expectedValues))
         print("outcome: " + str(results))
         print("number of correct classifications " + str(len(X)-misses) + "/" + str(len(X)))
-        print("misclassified 1's: " + str(miss1))
-        print("misclassified 2's: " + str(miss2))
-        print("misclassified 3's: " + str(miss3))
+        print("Confusion Matrix: ")
+        print(confusionMatrix[0])
+        print(confusionMatrix[1])
 
-    return results, misses, len(expectedValues)-misses
+    return results, confusionMatrix, misses, len(expectedValues)-misses
 
 def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printResults):
+    classes = createClassList(expectedValues)
+
     #classifiers voting
     votes = []
     for c in classifiers:
@@ -89,11 +85,10 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printR
         else:
             majority.append(0)
 
-    misses = 0
-    for i in range(len(majority)):
-        if(majority[i] != expectedValues[i]):
-            misses+=1
+    #building confusion matrix
+    confusionMatrix,misses = buildConfusionMatrix(classes,majority,expectedValues)
 
+    #printing results
     if(printResults == True):
         print("********************************************************************")
         for x in range(len(classifiers)):
@@ -101,7 +96,7 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printR
         print("Majority votes: " + str(majority))
         print("Expected: " + str(expectedValues))
         print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
-    return majority, misses, len(expectedValues)-misses
+    return majority, confusionMatrix, misses, len(expectedValues)-misses
 
 
 #removes outliers from dataset using specified outlier detector
@@ -163,6 +158,32 @@ def getCombos(dataset,r):
 
     return outputSet
 
+def createClassList(expectedValues):
+    classes = []
+    # creating list of classes
+    for e in expectedValues:
+        inlist = False
+        for c in classes:
+            if c == e:
+                inlist = True
+        if not inlist:
+            classes.append(e)
+    return classes
+
+def buildConfusionMatrix(classes, predictions,actual):
+    confusionMatrix = [[0 for x in range(len(classes))] for x in range(len(classes))]
+    misses = 0
+    for i in range(len(predictions)):
+        if(predictions[i] != actual[i]):
+            for c in classes:
+                if c == predictions[i]:
+                    confusionMatrix[actual[i]][c] += 1
+            misses+=1
+        for c in classes:
+            if c == predictions[i]:
+                confusionMatrix[c][c] += 1
+    return confusionMatrix, misses
+
 
 #machine learning parameters and classifiers
 high = 1
@@ -204,7 +225,18 @@ for i in range(1,len(cardboard[0])):
     woodCombos.append(getCombos(wood,i))
     plasticCombos.append(getCombos(plastic,i))
 
+#removing outliers
+cardboard = removeOutliers(cardboard, detector)
+wood = removeOutliers(wood, detector)
+plastic = removeOutliers(plastic, detector)
 
+
+#creating expected values
+cardboardEV = [[0 for i in range(len(cardboard))],[1 for i in range(len(cardboard))]]
+woodEV = [[ 0for i in range(len(wood))],[1 for i in range(len(wood))]]
+plasticEV = [[0 for i in range(len(plastic))],[1 for i in range(len(plastic))]]
+
+'''
 #combo predictions E vs F
 maxI = 0
 maxJ = 0
@@ -235,19 +267,6 @@ for i in range(len(cardboardCombos)):
 print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " max=" + str(maximum))
 
 
-
-#removing outliers
-cardboard = removeOutliers(cardboard, detector)
-wood = removeOutliers(wood, detector)
-plastic = removeOutliers(plastic, detector)
-
-
-#creating expected values
-cardboardEV = [[1 for i in range(len(cardboard))],[2 for i in range(len(cardboard))]]
-woodEV = [[1 for i in range(len(wood))],[2 for i in range(len(wood))]]
-plasticEV = [[1 for i in range(len(plastic))],[2 for i in range(len(plastic))]]
-
-
 #Majority vote predictions
 print("D vs Rest")
 majorityVote(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clfs, scale, low, high)
@@ -256,7 +275,7 @@ majorityVote(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clfs
 print("E vs F")
 majorityVote(wood+plastic,woodEV[0]+plasticEV[1],clfs,scale,low,high)
 
-
+'''
 
 #single model predictions
 #D vs Rest
