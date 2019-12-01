@@ -1,23 +1,13 @@
-from sklearn import svm
 import csv
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
-from sklearn.neural_network import MLPClassifier
-from pyod.models import abod
-from pyod.models import iforest
-from pyod.models import knn
 from itertools import combinations
-
-#D = cardboard
-#E = Plastic
-#F = wood
 
 #TODO confusion matrix plotting
 #TODO try removing different combinations of features
 #TODO only focus on D vs Rest, and E vs F
 #TODO do majority votes give best cases or single classifier
-        
+
 #leave one out cross validation
 def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
     X = np.array(dataset)
@@ -69,21 +59,20 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printR
     majority = []
     for col in range(len(votes[0])):
         subvotes.clear()
+        count0 = 0
         count1 = 0
-        count2 = 0
         for row in range(len(classifiers)):
             subvotes.append(votes[row][col])
         for x in subvotes:
-            if x == 1:
-                count1 += 1
+            if x == 0:
+                count0 += 1
             else:
-                count2 += 1
-        if count1 > count2:
-            majority.append(1)
-        elif count2 > count1:
-            majority.append(2)
-        else:
+                count1 += 1
+        if count0 > count1:
             majority.append(0)
+        else:
+            majority.append(1)
+
 
     #building confusion matrix
     confusionMatrix,misses = buildConfusionMatrix(classes,majority,expectedValues)
@@ -96,11 +85,16 @@ def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printR
         print("Majority votes: " + str(majority))
         print("Expected: " + str(expectedValues))
         print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
+        print("Confusion Matrix: ")
+        print(confusionMatrix[0])
+        print(confusionMatrix[1])
+
     return majority, confusionMatrix, misses, len(expectedValues)-misses
 
 
+
 #removes outliers from dataset using specified outlier detector
-def removeOutliers(data, detector):
+def removeOutliers(data, detector, printResults):
     outliers = 0
     dataWOoutliers = []
     X = np.array(data)
@@ -110,8 +104,9 @@ def removeOutliers(data, detector):
         if x == 1:
             outliers += 1
 
-    print("number of outliers: " + str(outliers))
-    print(predictions)
+    if printResults:
+        print("number of outliers: " + str(outliers))
+        print(predictions)
 
     for i in range(len(predictions)):
         if predictions[i] == 0:
@@ -179,114 +174,11 @@ def buildConfusionMatrix(classes, predictions,actual):
                 if c == predictions[i]:
                     confusionMatrix[actual[i]][c] += 1
             misses+=1
-        for c in classes:
-            if c == predictions[i]:
-                confusionMatrix[c][c] += 1
+        else:
+            for c in classes:
+                if c == predictions[i]:
+                    confusionMatrix[c][c] += 1
     return confusionMatrix, misses
-
-
-#machine learning parameters and classifiers
-high = 1
-low = -1
-scale = True
-svm1 = svm.SVC(kernel="rbf", decision_function_shape='ovr', gamma="scale", C=100) #creating svm object
-rf = RandomForestClassifier(n_estimators=10, random_state=10) #creating rf object
-mlp = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 3), random_state=1) #creating mlp object
-clfs = [rf,svm1,mlp]
-clf = svm1
-
-#outlier detectors
-angleBased = abod.ABOD(method="fast")
-isolationForrest = iforest.IForest(n_estimators=100, behaviour="new")
-kNearestNeighbors = knn.KNN(method="median")
-detector = kNearestNeighbors
-
-#datasets
-cardboard = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\DDeltas.csv")
-wood = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\EDeltas.csv")
-plastic = parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\BDeltas.csv")
-plastic = plastic+parseCsv("C:\\Users\\Luke\\Documents\\GitHub\\UREP_Cancer_Detection_Array_Microwave_Sensor\\results\\Deltas\\FDeltas.csv")
-
-#standard expected values
-expected = [[1 for x in range(50)],[2 for x in range(50)]]
-
-#sensor combo datasets row = rValue col = dataset
-#number of datasets for each rValue
-# 1 -> 5
-# 2 -> 10
-# 3 -> 10
-# 4 -> 5
-cardboardCombos = []
-woodCombos = []
-plasticCombos = []
-
-for i in range(1,len(cardboard[0])):
-    cardboardCombos.append(getCombos(cardboard,i))
-    woodCombos.append(getCombos(wood,i))
-    plasticCombos.append(getCombos(plastic,i))
-
-#removing outliers
-cardboard = removeOutliers(cardboard, detector)
-wood = removeOutliers(wood, detector)
-plastic = removeOutliers(plastic, detector)
-
-
-#creating expected values
-cardboardEV = [[0 for i in range(len(cardboard))],[1 for i in range(len(cardboard))]]
-woodEV = [[ 0for i in range(len(wood))],[1 for i in range(len(wood))]]
-plasticEV = [[0 for i in range(len(plastic))],[1 for i in range(len(plastic))]]
-
-'''
-#combo predictions E vs F
-maxI = 0
-maxJ = 0
-maximum = 0
-for i in range(len(cardboardCombos)):
-    for j in range(len(cardboardCombos[i])):
-        print(str(i) + str(j))
-        c = majorityVote(woodCombos[i][j]+plasticCombos[i][j],expected[0]+expected[1],clfs,True,low,high,True)[2]
-        if(c > maximum):
-            maximum = c
-            maxI = i
-            maxJ = j
-print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " max=" + str(maximum))
-
-
-#combo predictions D vs Rest
-maxI = 0
-maxJ = 0
-maximum = 0
-for i in range(len(cardboardCombos)):
-    for j in range(len(cardboardCombos[i])):
-        print(str(i) + str(j))
-        c = loocv(cardboardCombos[i][j]+woodCombos[i][j]+plasticCombos[i][j],expected[0]+expected[1]+expected[1],clf,True,low,high,True)[2]
-        if(c > maximum):
-            maximum = c
-            maxI = i
-            maxJ = j
-print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " max=" + str(maximum))
-
-
-#Majority vote predictions
-print("D vs Rest")
-majorityVote(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clfs, scale, low, high)
-
-
-print("E vs F")
-majorityVote(wood+plastic,woodEV[0]+plasticEV[1],clfs,scale,low,high)
-
-'''
-
-#single model predictions
-#D vs Rest
-print("Classifying D")
-loocv(cardboard+wood+plastic, cardboardEV[0]+plasticEV[1]+woodEV[1], clf, scale, low, high, True)
-
-
-#E vs F
-print("Classifying E vs F")
-loocv(wood+plastic, woodEV[0]+plasticEV[1], clf, scale, low, high, True)
-
 
 
 
