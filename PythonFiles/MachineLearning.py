@@ -1,96 +1,45 @@
 import csv
 import numpy as np
 from sklearn import preprocessing
+from sklearn.model_selection import cross_val_score,cross_val_predict
+from sklearn.metrics import confusion_matrix
 from itertools import combinations
+
 
 #TODO confusion matrix plotting
 #TODO try removing different combinations of features
 #TODO only focus on D vs Rest, and E vs F
 #TODO do majority votes give best cases or single classifier
 
-#leave one out cross validation
-def loocv(dataset,expectedValues,classifier,scale,minimum,maximum,printResults):
+
+def crossValidate(dataset,expectedValues, classifier, iterator, scale, minimum, maximum, printResults):
     X = np.array(dataset)
     y = np.array(expectedValues)
-    clf = classifier
-    results = []
-    classes = createClassList(expectedValues)
-    misses = 0
 
-    #scalling data
-    if(scale == True):
-        min_max_scaler = preprocessing.MinMaxScaler(feature_range =(minimum,maximum))
+    # scalling data
+    if (scale == True):
+        min_max_scaler = preprocessing.MinMaxScaler(feature_range=(minimum, maximum))
         X = min_max_scaler.fit_transform(X)
 
-    #performing loocv
-    for x in range(len(X)):
-        A = np.delete(X,x,0)
-        b = np.delete(y,x)
-        clf.fit(A,b)
-        prediction = clf.predict([X[x]])
-        results.append(prediction[0])
+    #getting scores and predictions
+    scores = cross_val_score(classifier,X,y,cv = iterator)
+    predictions = cross_val_predict(classifier,X,y,cv = iterator)
 
-    #building confusion matrix
-    confusionMatrix, misses = buildConfusionMatrix(classes,results,expectedValues)
-
+    #getting number of correct classifications
+    correct = 0
+    for x,y in zip(predictions,expectedValues):
+        if x == y:
+            correct += 1
 
     if(printResults):
-        print("********************************************************************")
-        print("expected: " + str(expectedValues))
-        print("outcome: " + str(results))
-        print("number of correct classifications " + str(len(X)-misses) + "/" + str(len(X)))
-        print("Confusion Matrix: ")
-        print(confusionMatrix[0])
-        print(confusionMatrix[1])
+        #printing results
+        print("Correct Classifications: " + str(correct) + "/" + str(len(expectedValues)))
+        print("Percentage Correctly Classified: " + str(scores.mean()))
 
-    return results, confusionMatrix, misses, len(expectedValues)-misses
+        #printing confusion matrix
+        print(confusion_matrix(expectedValues,predictions))
 
-def majorityVote(dataset,expectedValues,classifiers,scale,minimum,maximum,printResults):
-    classes = createClassList(expectedValues)
-
-    #classifiers voting
-    votes = []
-    for c in classifiers:
-        votes.append(loocv(dataset,expectedValues,c,scale,minimum,maximum,False)[0])
-
-
-    #tallying votes
-    subvotes = []
-    majority = []
-    for col in range(len(votes[0])):
-        subvotes.clear()
-        count0 = 0
-        count1 = 0
-        for row in range(len(classifiers)):
-            subvotes.append(votes[row][col])
-        for x in subvotes:
-            if x == 0:
-                count0 += 1
-            else:
-                count1 += 1
-        if count0 > count1:
-            majority.append(0)
-        else:
-            majority.append(1)
-
-
-    #building confusion matrix
-    confusionMatrix,misses = buildConfusionMatrix(classes,majority,expectedValues)
-
-    #printing results
-    if(printResults == True):
-        print("********************************************************************")
-        for x in range(len(classifiers)):
-            print("classifier " + str(x) + " votes:" + str(votes[x]))
-        print("Majority votes: " + str(majority))
-        print("Expected: " + str(expectedValues))
-        print("Correctly Classified: " + str(len(expectedValues)-misses) + "/" + str(len(expectedValues)))
-        print("Confusion Matrix: ")
-        print(confusionMatrix[0])
-        print(confusionMatrix[1])
-
-    return majority, confusionMatrix, misses, len(expectedValues)-misses
-
+    return scores,predictions,correct
 
 
 #removes outliers from dataset using specified outlier detector
@@ -153,32 +102,39 @@ def getCombos(dataset,r):
 
     return outputSet
 
-def createClassList(expectedValues):
-    classes = []
-    # creating list of classes
-    for e in expectedValues:
-        inlist = False
-        for c in classes:
-            if c == e:
-                inlist = True
-        if not inlist:
-            classes.append(e)
-    return classes
+def getBestCombination(datasetArray, expectedValues, classifier, iterator, scale, minimum, maximum, printResults):
+    maxI = 0
+    maxJ = 0
+    maxC = 0
+    dataset = []
 
-def buildConfusionMatrix(classes, predictions,actual):
-    confusionMatrix = [[0 for x in range(len(classes))] for x in range(len(classes))]
-    misses = 0
-    for i in range(len(predictions)):
-        if(predictions[i] != actual[i]):
-            for c in classes:
-                if c == predictions[i]:
-                    confusionMatrix[actual[i]][c] += 1
-            misses+=1
-        else:
-            for c in classes:
-                if c == predictions[i]:
-                    confusionMatrix[c][c] += 1
-    return confusionMatrix, misses
+    for i in range(len(datasetArray[0])):
+        for j in range(len(datasetArray[0][i])):
+            if printResults:
+                print("combo set: " + str(i) + str(j))
+
+            # creating data set for current combination
+            dataset.clear()
+            for set in datasetArray:
+                dataset += set[i][j]
+
+            # using majority vote or loocv based on input parameters
+            c = crossValidate(dataset, expectedValues, classifier, iterator, scale, minimum, maximum, printResults)[2]
+
+            # checking if new maximum
+            if c > maxC:
+                maxC = c
+                maxI = i
+                maxJ = j
+
+    # creating set with best prediction results
+    bestSet = []
+    for set in datasetArray:
+        bestSet += set[i][j]
+
+    # printing results
+    print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " correct classifications=" + str(maxC) + "/" + str(len(expectedValues)))
+    return bestSet
 
 
 
