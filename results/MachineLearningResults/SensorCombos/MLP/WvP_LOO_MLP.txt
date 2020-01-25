@@ -1,0 +1,225 @@
+Samples: Wood vs. Plastic
+Cross Validation: LOO
+Algorithm: MLP
+
+sensors used: sensor 1
+combo set: 00
+Correct Classifications: 62/94
+Percentage Correctly Classified: 0.6595744680851063
+[[38  9]
+ [23 24]]
+=====================================================
+sensors used: sensor 2
+combo set: 01
+Correct Classifications: 59/94
+Percentage Correctly Classified: 0.6276595744680851
+[[33 14]
+ [21 26]]
+=====================================================
+sensors used: sensor 3
+combo set: 02
+Correct Classifications: 62/94
+Percentage Correctly Classified: 0.6595744680851063
+[[31 16]
+ [16 31]]
+=====================================================
+sensors used: sensor 4
+combo set: 03
+Correct Classifications: 58/94
+Percentage Correctly Classified: 0.6170212765957447
+[[33 14]
+ [22 25]]
+=====================================================
+sensors used: sensor 5
+combo set: 04
+Correct Classifications: 48/94
+Percentage Correctly Classified: 0.5106382978723404
+[[28 19]
+ [27 20]]
+=====================================================
+sensors used: sensor 1,2
+combo set: 10
+Correct Classifications: 66/94
+Percentage Correctly Classified: 0.7021276595744681
+[[31 16]
+ [12 35]]
+=====================================================
+sensors used: sensor 1,3
+combo set: 11
+Correct Classifications: 66/94
+Percentage Correctly Classified: 0.7021276595744681
+[[31 16]
+ [12 35]]
+=====================================================
+sensors used: sensor 1,4
+combo set: 12
+Correct Classifications: 67/94
+Percentage Correctly Classified: 0.7127659574468085
+[[31 16]
+ [11 36]]
+=====================================================
+sensors used: sensor 1,5
+combo set: 13
+Correct Classifications: 73/94
+Percentage Correctly Classified: 0.776595744680851
+[[38  9]
+ [12 35]]
+=====================================================
+sensors used: sensor 2,3
+combo set: 14
+Correct Classifications: 62/94
+Percentage Correctly Classified: 0.6595744680851063
+[[24 23]
+ [ 9 38]]
+=====================================================
+sensors used: sensor 2,4
+combo set: 15
+Correct Classifications: 61/94
+Percentage Correctly Classified: 0.648936170212766
+[[26 21]
+ [12 35]]
+=====================================================
+sensors used: sensor 2,5
+combo set: 16
+Correct Classifications: 61/94
+Percentage Correctly Classified: 0.648936170212766
+[[30 17]
+ [16 31]]
+=====================================================
+sensors used: sensor 3,4
+combo set: 17
+Correct Classifications: 54/94
+Percentage Correctly Classified: 0.574468085106383
+[[27 20]
+ [20 27]]
+=====================================================
+sensors used: sensor 3,5
+combo set: 18
+Correct Classifications: 62/94
+Percentage Correctly Classified: 0.6595744680851063
+[[27 20]
+ [12 35]]
+=====================================================
+sensors used: sensor 4,5
+combo set: 19
+Correct Classifications: 60/94
+Percentage Correctly Classified: 0.6382978723404256
+[[27 20]
+ [14 33]]
+=====================================================
+sensors used: sensor 1,2,3
+combo set: 20
+Correct Classifications: 0/94
+Percentage Correctly Classified: 0.0
+[[ 0 47]
+ [47  0]]
+=====================================================
+sensors used: sensor 1,2,4
+combo set: 21
+Correct Classifications: 0/94
+Percentage Correctly Classified: 0.0
+[[ 0 47]
+ [47  0]]
+=====================================================
+sensors used: sensor 1,2,5
+combo set: 22
+Correct Classifications: 0/94
+Percentage Correctly Classified: 0.0
+[[ 0 47]
+ [47  0]]
+=====================================================
+sensors used: sensor 1,3,4
+combo set: 23
+Correct Classifications: 0/94
+Percentage Correctly Classified: 0.0
+[[ 0 47]
+ [47  0]]
+=====================================================
+sensors used: sensor 1,3,5
+combo set: 24
+Correct Classifications: 0/94
+Percentage Correctly Classified: 0.0
+[[ 0 47]
+ [47  0]]
+=====================================================
+sensors used: sensor 1,4,5
+combo set: 25
+Correct Classifications: 66/94
+Percentage Correctly Classified: 0.7021276595744681
+[[31 16]
+ [12 35]]
+=====================================================
+sensors used: sensor 2,3,4
+combo set: 26
+Correct Classifications: 63/94
+Percentage Correctly Classified: 0.6702127659574468
+[[43  4]
+ [27 20]]
+=====================================================
+sensors used: sensor 2,3,5
+combo set: 27
+Correct Classifications: 50/94
+Percentage Correctly Classified: 0.5319148936170213
+[[37 10]
+ [34 13]]
+=====================================================
+sensors used: sensor 2,4,5
+combo set: 28
+Correct Classifications: 54/94
+Percentage Correctly Classified: 0.574468085106383
+[[31 16]
+ [24 23]]
+=====================================================
+sensors used: sensor 3,4,5
+combo set: 29
+Correct Classifications: 65/94
+Percentage Correctly Classified: 0.6914893617021277
+[[34 13]
+ [16 31]]
+=====================================================
+sensors used: sensor 1,2,3,4
+combo set: 30
+Correct Classifications: 67/94
+Percentage Correctly Classified: 0.7127659574468085
+[[31 16]
+ [11 36]]
+=====================================================
+sensors used: sensor 1,2,3,5
+combo set: 31
+Correct Classifications: 66/94
+Percentage Correctly Classified: 0.7021276595744681
+[[31 16]
+ [12 35]]
+=====================================================
+sensors used: sensor 1,2,4,5
+combo set: 32
+Correct Classifications: 65/94
+Percentage Correctly Classified: 0.6914893617021277
+[[29 18]
+ [11 36]]
+=====================================================
+sensors used: sensor 1,3,4,5
+combo set: 33
+Correct Classifications: 70/94
+Percentage Correctly Classified: 0.7446808510638298
+[[32 15]
+ [ 9 38]]
+=====================================================
+sensors used: sensor 2,3,4,5
+combo set: 34
+Correct Classifications: 68/94
+Percentage Correctly Classified: 0.723404255319149
+[[29 18]
+ [ 8 39]]
+=====================================================
+sensors used: sensor 1,2,3,4,5
+combo set: 40
+Correct Classifications: 66/94
+Percentage Correctly Classified: 0.7021276595744681
+[[30 17]
+ [11 36]]
+=====================================================
+Best results:
+i=1 j=3
+sensors used: sensor 1,5
+correct classifications=73/94

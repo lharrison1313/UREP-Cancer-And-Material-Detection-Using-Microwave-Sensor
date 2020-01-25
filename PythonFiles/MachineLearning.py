@@ -11,6 +11,41 @@ from itertools import combinations
 #TODO only focus on D vs Rest, and E vs F
 #TODO do majority votes give best cases or single classifier
 
+comboDictionary = {
+    "00": "sensor 1",
+    "01": "sensor 2",
+    "02": "sensor 3",
+    "03": "sensor 4",
+    "04": "sensor 5",
+    "10": "sensor 1,2",
+    "11": "sensor 1,3",
+    "12": "sensor 1,4",
+    "13": "sensor 1,5",
+    "14": "sensor 2,3",
+    "15": "sensor 2,4",
+    "16": "sensor 2,5",
+    "17": "sensor 3,4",
+    "18": "sensor 3,5",
+    "19": "sensor 4,5",
+    "20": "sensor 1,2,3",
+    "21": "sensor 1,2,4",
+    "22": "sensor 1,2,5",
+    "23": "sensor 1,3,4",
+    "24": "sensor 1,3,5",
+    "25": "sensor 1,4,5",
+    "26": "sensor 2,3,4",
+    "27": "sensor 2,3,5",
+    "28": "sensor 2,4,5",
+    "29": "sensor 3,4,5",
+    "30": "sensor 1,2,3,4",
+    "31": "sensor 1,2,3,5",
+    "32": "sensor 1,2,4,5",
+    "33": "sensor 1,3,4,5",
+    "34": "sensor 2,3,4,5",
+    "40": "sensor 1,2,3,4,5"
+
+}
+
 
 def crossValidate(dataset,expectedValues, classifier, iterator, scale, minimum, maximum, printResults):
     X = np.array(dataset)
@@ -106,11 +141,13 @@ def getBestCombination(datasetArray, expectedValues, classifier, iterator, scale
     maxI = 0
     maxJ = 0
     maxC = 0
+    avg = 0
     dataset = []
 
     for i in range(len(datasetArray[0])):
         for j in range(len(datasetArray[0][i])):
             if printResults:
+                print("sensors used: " + comboDictionary[str(i)+str(j)])
                 print("combo set: " + str(i) + str(j))
 
             # creating data set for current combination
@@ -126,6 +163,7 @@ def getBestCombination(datasetArray, expectedValues, classifier, iterator, scale
                 maxC = c
                 maxI = i
                 maxJ = j
+            print('=====================================================')
 
     # creating set with best prediction results
     bestSet = []
@@ -133,7 +171,7 @@ def getBestCombination(datasetArray, expectedValues, classifier, iterator, scale
         bestSet += set[i][j]
 
     # printing results
-    print("Best results: i=" + str(maxI) + " j=" + str(maxJ) + " correct classifications=" + str(maxC) + "/" + str(len(expectedValues)))
+    print("Best results:\ni=" + str(maxI) + " j=" + str(maxJ) + "\nsensors used: "+ comboDictionary[str(maxI)+str(maxJ)] + "\ncorrect classifications=" + str(maxC) + "/" + str(len(expectedValues)))
     return bestSet
 
 

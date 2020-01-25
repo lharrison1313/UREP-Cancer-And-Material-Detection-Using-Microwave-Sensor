@@ -1,0 +1,7 @@
+Classifiers:
+Gaussian Nieve Bayes
+Decision Tree Classifier
+K-Nearest Neighbors Classifier: n_neighbors = 5
+Random Forest Classifier: n_estimators = 10
+Multi Layer Perceptron: solver= lbfgs, hidden layer 1 = 5 neurons, hidden layer 2 = 3 neurons
+Support Vector Classifier: kernel = rbf, c = 100

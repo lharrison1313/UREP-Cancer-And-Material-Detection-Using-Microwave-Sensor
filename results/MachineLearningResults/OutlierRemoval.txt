@@ -1,0 +1,21 @@
+K-Nearest Neighbors
+median
+n_neighbors = 5
+
+Cardboard:
+number of outliers: 4
+[0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 1 0 0 1 0 1 0 0 0 0]
+samples removed: 14,41,44,46
+
+Wood:
+number of outliers: 3
+[0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0]
+samples removed: 13,17,27
+
+Plastic:
+number of outliers: 3
+[0 1 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0]
+samples removed 2,7,9
